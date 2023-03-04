@@ -58,7 +58,7 @@ func (m *PixelMatrix) ToCharPhotoColorful() string {
 		var charLine string
 		for x := 0; x < len(m.Matrix[y]); x++ {
 			pixel := m.Matrix[y][x]
-			charLine += decorateWithColor(pixel.Char, pixel.Color)
+			charLine += DecorateWithColor(pixel.Char, pixel.Color)
 		}
 		charLines = append(charLines, charLine)
 	}
@@ -87,7 +87,7 @@ func BuildPixelMatrix(img image.Image, charSet []byte) *PixelMatrix {
 		pixels := make([]*Pixel, 0)
 		for x := 0; x < img.Bounds().Dx(); x++ { // 方向 →。
 			// 1. 获取RGB、灰度值。
-			r, g, b := get256RGB(img, x, y)
+			r, g, b := Get256RGB(img, x, y)
 			gray := 0.2126*float64(r) + 0.7152*float64(g) + 0.0722*float64(b)
 
 			// 2. 根据灰度选用字符集的字符。
@@ -104,14 +104,14 @@ func BuildPixelMatrix(img image.Image, charSet []byte) *PixelMatrix {
 	return &PixelMatrix{Matrix: matrix}
 }
 
-// get256RGB 获取数值在区间[0, 256)的RGB。
-func get256RGB(img image.Image, x int, y int) (uint8, uint8, uint8) {
+// Get256RGB 获取数值在区间[0, 256)的RGB。
+func Get256RGB(img image.Image, x int, y int) (uint8, uint8, uint8) {
 	r, g, b, _ := img.At(x, y).RGBA() // 返回的数值区间为[0, 65536)。
 	return uint8(r / 256), uint8(g / 256), uint8(b / 256)
 }
 
-// decorateWithColor 用颜色装饰字符，返回ANSI序列。
+// DecorateWithColor 用颜色装饰字符，返回ANSI序列。
 // 序列字符串如: "\x1b[38;5;245m9\x1b[0m"，在使用 fmt.Print 输出该字符串，终端会输出一个灰色的 9。
-func decorateWithColor(char byte, color *Color) string {
+func DecorateWithColor(char byte, color *Color) string {
 	return rgbterm.FgString(string([]byte{char}), color.R, color.G, color.B)
 }
