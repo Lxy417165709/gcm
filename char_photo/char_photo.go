@@ -2,6 +2,7 @@ package char_photo
 
 import (
 	"github.com/aybabtme/rgbterm"
+	"github.com/nfnt/resize"
 	"image"
 	"os"
 	"strings"
@@ -79,6 +80,21 @@ type Color struct {
 }
 
 // -------------------------------------------------------------------------------------------------------------------
+
+// BuildPixelMatrixByImgPath 构建像素矩阵。
+func BuildPixelMatrixByImgPath(path string, width, height uint, charSet []byte) (*PixelMatrix, error) {
+	// 1. 打开原始图片。
+	orgImg, err := OpenImage(path)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. 缩放，得到缩放图片。
+	scaleImg := resize.Resize(width, height, orgImg, resize.Lanczos3)
+
+	// 3. 形成像素矩阵，返回。
+	return BuildPixelMatrix(scaleImg, charSet), nil
+}
 
 // BuildPixelMatrix 构建像素矩阵。
 func BuildPixelMatrix(img image.Image, charSet []byte) *PixelMatrix {
