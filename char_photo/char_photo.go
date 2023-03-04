@@ -3,9 +3,15 @@ package char_photo
 import (
 	"github.com/aybabtme/rgbterm"
 	"image"
-	"log"
 	"os"
 	"strings"
+)
+
+// 字符集。
+var (
+	CharSet1 = []byte(`@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,\"^'. `)
+	CharSet2 = []byte(`@&W0*+. `)
+	CharSet3 = []byte(`@ `)
 )
 
 // OpenImage 打开图片，返回图片对象。
@@ -13,7 +19,6 @@ func OpenImage(path string) (image.Image, error) {
 	// 1. 打开文件。
 	imgFile, err := os.Open(path)
 	if err != nil {
-		log.Fatalf("Open fail. err=[%+v].", err)
 		return nil, err
 	}
 	defer imgFile.Close()
@@ -21,7 +26,6 @@ func OpenImage(path string) (image.Image, error) {
 	// 2. 解析为图片对象。
 	img, _, err := image.Decode(imgFile)
 	if err != nil {
-		log.Fatalf("Decode fail. err=[%+v].", err)
 		return nil, err
 	}
 
@@ -29,15 +33,13 @@ func OpenImage(path string) (image.Image, error) {
 	return img, nil
 }
 
-// -------------------------------------------------------------------------------------------------------------------
-
 // PixelMatrix 像素矩阵。
 type PixelMatrix struct {
 	Matrix [][]*Pixel
 }
 
-// toCharPhotoGray 转为字符图片。 (灰白)
-func (m *PixelMatrix) toCharPhotoGray() string {
+// ToCharPhotoGray 转为字符图片。 (灰白)
+func (m *PixelMatrix) ToCharPhotoGray() string {
 	charLines := make([]string, 0)
 	for y := 0; y < len(m.Matrix); y++ {
 		var charLine string
@@ -49,7 +51,8 @@ func (m *PixelMatrix) toCharPhotoGray() string {
 	return strings.Join(charLines, "\n")
 }
 
-func (m *PixelMatrix) toCharPhotoColorful() string {
+// ToCharPhotoColorful 转为字符图片。 (彩色)
+func (m *PixelMatrix) ToCharPhotoColorful() string {
 	charLines := make([]string, 0)
 	for y := 0; y < len(m.Matrix); y++ {
 		var charLine string
@@ -77,8 +80,8 @@ type Color struct {
 
 // -------------------------------------------------------------------------------------------------------------------
 
-// buildPixelMatrix 构建像素矩阵。
-func buildPixelMatrix(img image.Image, charSet []byte) *PixelMatrix {
+// BuildPixelMatrix 构建像素矩阵。
+func BuildPixelMatrix(img image.Image, charSet []byte) *PixelMatrix {
 	matrix := make([][]*Pixel, 0)
 	for y := 0; y < img.Bounds().Dy(); y++ { // 方向 ↓。
 		pixels := make([]*Pixel, 0)
