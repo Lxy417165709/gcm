@@ -2,8 +2,10 @@ package char_photo
 
 import (
 	"github.com/aybabtme/rgbterm"
+	_ "github.com/disintegration/imaging"
 	"github.com/nfnt/resize"
 	"image"
+	"image/color"
 	"os"
 	"strings"
 )
@@ -70,13 +72,8 @@ func (m *PixelMatrix) ToCharPhotoColorful() string {
 
 // Pixel 像素。
 type Pixel struct {
-	Color *Color // 颜色。
-	Char  byte   // 字符。
-}
-
-// Color 颜色。
-type Color struct {
-	R, G, B uint8
+	Color color.Color
+	Char  byte // 字符。
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -103,15 +100,16 @@ func BuildPixelMatrix(img image.Image, charSet []byte) *PixelMatrix {
 		pixels := make([]*Pixel, 0)
 		for x := 0; x < img.Bounds().Dx(); x++ { // 方向 →。
 			// 1. 获取RGB、灰度值。
-			r, g, b := Get256RGB(img, x, y)
+			pixelColor := img.At(x, y)
+			r, g, b, _ := pixelColor.RGBA()
 			gray := 0.2126*float64(r) + 0.7152*float64(g) + 0.0722*float64(b)
 
 			// 2. 根据灰度选用字符集的字符。
-			charIndex := int(gray / 256.0 * float64(len(charSet)))
+			charIndex := int(gray / 65536.0 * float64(len(charSet)))
 
 			// 3. 形成像素。
 			pixels = append(pixels, &Pixel{
-				Color: &Color{R: r, G: g, B: b},
+				Color: pixelColor,
 				Char:  charSet[charIndex],
 			})
 		}
@@ -120,14 +118,9 @@ func BuildPixelMatrix(img image.Image, charSet []byte) *PixelMatrix {
 	return &PixelMatrix{Matrix: matrix}
 }
 
-// Get256RGB 获取数值在区间[0, 256)的RGB。
-func Get256RGB(img image.Image, x int, y int) (uint8, uint8, uint8) {
-	r, g, b, _ := img.At(x, y).RGBA() // 返回的数值区间为[0, 65536)。
-	return uint8(r / 256), uint8(g / 256), uint8(b / 256)
-}
-
 // DecorateWithColor 用颜色装饰字符，返回ANSI序列。
 // 序列字符串如: "\x1b[38;5;245m9\x1b[0m"，在使用 fmt.Print 输出该字符串，终端会输出一个灰色的 9。
-func DecorateWithColor(char byte, color *Color) string {
-	return rgbterm.FgString(string([]byte{char}), color.R, color.G, color.B)
+func DecorateWithColor(char byte, c color.Color) string {
+	r, g, b, _ := c.RGBA()
+	return rgbterm.FgString(string([]byte{char}), uint8(r/256), uint8(g/256), uint8(b/256))
 }
